@@ -1,22 +1,17 @@
 package logrotation
 
 import (
-	"bytes"
 	"io"
 	"os"
-	"sync"
 )
 
 type logRotation struct {
 	name string
-	flag int
 	perm os.FileMode
 
 	setOutput func(writer io.Writer)
 
 	f   *os.File
-	buf *bytes.Buffer
-	m   sync.Mutex
 }
 
 func panicIf(err error) {
@@ -25,20 +20,17 @@ func panicIf(err error) {
 	}
 }
 
-func New(name string, flag int, perm os.FileMode, setOutput func(writer io.Writer)) (*logRotation, error) {
-	f, err := os.OpenFile(name, flag, perm)
+func New(name string, perm os.FileMode, setOutput func(writer io.Writer)) (*logRotation, error) {
+	f, err := createFile(name, perm)
 	if err != nil {
 		return nil, err
 	}
 
-	data := make([]byte, 0, 256)
 	w := &logRotation{
 		name:      name,
-		flag:      flag,
 		perm:      perm,
 		setOutput: setOutput,
 		f:         f,
-		buf:       bytes.NewBuffer(data),
 	}
 
 	setOutput(f)
@@ -46,43 +38,24 @@ func New(name string, flag int, perm os.FileMode, setOutput func(writer io.Write
 	return w, nil
 }
 
-func (w *logRotation) Write(p []byte) (int, error) {
-	w.m.Lock()
-	n, err := w.buf.Write(p)
-	w.m.Unlock()
-	return n, err
-}
-
 func (w *logRotation) Close() {
 	w.f.Close()
 }
 
-func (w *logRotation) Rotate(rotFileName string) {
-	w.buf.Reset()
+func (w *logRotation) FileName() string {
+	return w.name
+}
 
-	w.setOutput(w)
+func (w *logRotation) Rotate() {
+	f, err := createFile(w.name, w.perm)
+	panicIf(err)
 
-	err := w.f.Sync()
+	w.setOutput(f)
+
+	err = w.f.Sync()
 	panicIf(err)
 	err = w.f.Close()
 	panicIf(err)
 
-	err = os.Rename(w.name, rotFileName)
-	panicIf(err)
-
-	w.f, err = os.OpenFile(w.name, w.flag, w.perm)
-	panicIf(err)
-
-	w.setOutput(w.f)
-
-	rotFile, err := os.OpenFile(rotFileName, w.flag, w.perm)
-	panicIf(err)
-
-	_, err = w.buf.WriteTo(rotFile)
-	panicIf(err)
-
-	err = rotFile.Sync()
-	panicIf(err)
-	err = rotFile.Close()
-	panicIf(err)
+	w.f = f
 }
