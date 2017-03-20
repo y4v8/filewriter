@@ -1,6 +1,6 @@
 // +build !windows
 
-package logrotation
+package filewriter
 
 import (
 	"os"

@@ -1,8 +1,10 @@
-package logrotation
+// +build windows
+
+package filewriter
 
 import (
-	"syscall"
 	"os"
+	"syscall"
 	"unsafe"
 )
 
@@ -23,7 +25,7 @@ func createFile(name string, perm os.FileMode) (*os.File, error) {
 
 	fd, err := syscall.CreateFile(path,
 		syscall.FILE_APPEND_DATA,
-		syscall.FILE_SHARE_READ | syscall.FILE_SHARE_DELETE,
+		syscall.FILE_SHARE_READ|syscall.FILE_SHARE_DELETE,
 		securityAttributes,
 		syscall.OPEN_ALWAYS,
 		syscall.FILE_ATTRIBUTE_NORMAL,

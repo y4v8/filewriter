@@ -1,37 +1,3 @@
-### File writer
-
-#### Creates a file with the specified name with access for writing and with shared access for renaming.
-
----------------------------------------
-
-### Overview
-
-```go
-func New(name string, perm os.FileMode) *file
-```
-New returns a pointer to the new file.
-
-```go
-func Write(p []byte) (n int, err error)
-```
-Implementation of the Writer interface.
-
-```go
-func Create() error
-```
-Create closes, if necessary, and creates a file with the above name.
-
-```go
-func Close()
-```
-Close file.
-
-
----------------------------------------
-
-#### Example of a log rotation:
-
-```go
 package main
 
 import (
@@ -74,4 +40,3 @@ func main() {
 		i++
 	}
 }
-```
